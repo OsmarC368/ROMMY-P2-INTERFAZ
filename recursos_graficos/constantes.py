@@ -86,6 +86,15 @@ ELEMENTO_HOVER_PRINCIPAL = NARANJA
 ELEMENTO_CLICADO_PRINCIPAL = VERDE_CLARO
 #fin de colores principales usados en botones y menus
 
+# ── Colores del botón Cheat/Admin ────────────────────────────────────────────
+# Rojo intenso para que sea claramente visible solo para el Host
+CHEAT_BOTON_FONDO   = (180, 30, 30)    # rojo oscuro
+CHEAT_BOTON_HOVER   = (220, 60, 60)    # rojo más claro al pasar el mouse
+CHEAT_BOTON_CLIC    = (255, 100, 100)  # rojo claro al hacer clic
+CHEAT_BOTON_BORDE   = (255, 200, 0)    # borde dorado para distinguirlo
+CHEAT_BOTON_TEXTO   = BLANCO
+# ─────────────────────────────────────────────────────────────────────────────
+
 #Dimensiones de elementos(botones por ejemplo)
 ELEMENTO_PEQUENO_ANCHO = ANCHO_VENTANA*0.28
 ELEMENTO_PEQUENO_ALTO = ANCHO_VENTANA*0.08
@@ -106,57 +115,7 @@ SCALA = 0.17
 #Menu de instrucciones,dimensiones
 ANCHO_MENU_INSTRUCCIONES = ANCHO_VENTANA*0.95 
 ALTO_MENU_INSTRUCCIONES = ALTO_VENTANA*0.95
-TEXTO_DE_INSTRUCCIONES = """
-
-OBJETIVO DEL JUEGO:
-────────────────────────────
-El último jugador en acumular menos de 500 puntos gana la partida.
-El primer jugador en alcanzar o superar los 500 puntos es eliminado.
-
-
-REGLAS GENERALES:
-────────────────────────────
-1. En cada turno, puedes robar una carta del mazo o del descarte.
-2. Puedes robar fuera de tu turno (COMPRA), pero debes tomar una carta extra como penalización.
-3. El objetivo es formar combinaciones para bajarse.
-
-
-TIPOS DE JUGADAS:
-────────────────────────────
-• TRÍOS:
-  - Mínimo 3 cartas del mismo valor
-  - Máximo 1 Joker
-
-• SEGUIDILLAS:
-  - Mínimo 4 cartas del mismo palo
-  - Orden ascendente
-  - No se permiten dos Jokers juntos
-
-
-RONDA Y PROGRESIÓN:
-────────────────────────────
-Cada partida consta de 4 rondas:
-
-RONDA 1 = 1 TRÍO + 1 SEGUIDILLA  
-RONDA 2 = 2 SEGUIDILLAS  
-RONDA 3 = 3 TRÍOS  
-RONDA 4 = 1 SEGUIDILLA + 2 TRÍOS (RONDA COMPLETA)
-
-
-FINAL DE RONDA:
-────────────────────────────
-Cada ronda termina cuando un jugador logra bajarse completamente.
-
-Al finalizar:
-• Los jugadores suman los puntos de las cartas restantes en su mano.
-
-
-CONDICIÓN ESPECIAL FINAL:
-────────────────────────────
-En la ronda 4, el jugador debe bajar TODAS sus cartas en un solo turno,
-incluyendo el descarte final (10 cartas en total).
-
-"""
+TEXTO_DE_INSTRUCCIONES = "1. El último jugador en acumular menos de 500 puntos al acabar todos los juegos de la partida, gana la partida. \n2. El primer jugador en alcanzar o superar los 500 puntos es eliminado. \n3. En cada turno, cada jugador en su turno puede robar una carta del mazo o del descarte.\n4. Puedes robar una carta fuera de tu turno (Compra) pero de penalización debes robar otra carta.\n5. El objetivo es formar tríos o seguidillas de cartas para bajarse.\n6. Los tríos debe tener mínimo 3 cartas del mismo valor y no más de un Joker.\n7. Las seguidillas deben de ser de mínimo 4 cartas del mismo palo y valor ascendente, sin tener dos Jokers juntos.\n8. Cada juego consta de 4 rondas, cada ronda termina cuando un jugador consigue bajar todas sus cartas.\n9. Al finalizar cada ronda, los jugadores que no consiguieron bajarse suman las cartas en sus manos según su valor."
 #fin de menu de instrucciones
 
 
@@ -192,7 +151,7 @@ ALTO_MENU_NOM_USUARIO = ALTO_MENU_CNT_J
 ANCHO_MENU_SELECCION_SALA = ANCHO_VENTANA * 0.95
 ALTO_MENU_SELECCION_SALA = ALTO_VENTANA * 0.95
 
-ESCALA_CARTAS = 0.12
+ESCALA_CARTAS = 0.10
 ESCALA_DEMAS_CARTAS = 0.07
 ESCALA_DMUCHAS_CARTAS = 0.08
 
@@ -202,5 +161,11 @@ EVENTO_SALAS_ENCONTRADAS = pygame.USEREVENT + 2
 EVENTO_INICIAR_PARTIDA = pygame.USEREVENT + 3
 # Agrega esto después de importar pygame
 REDIBUJAR_CARTAS = pygame.USEREVENT + 4
-# Notificación visual cuando un jugador entra o sale de la sala
+
+# ── Evento Cheat/Admin: el Host solicita concluir la ronda inmediatamente ────
+# Se dispara en el hilo de red (conexion.py / procesador_mensajes) cuando el
+# servidor recibe el mensaje "concluir_ronda" del Host y lo reenvía a todos
+# los clientes con las nuevas cartas del Host ya bajadas a la mesa.
+EVENTO_CONCLUIR_RONDA = pygame.USEREVENT + 5
+# ─────────────────────────────────────────────────────────────────────────────
 EVENTO_NOTIFICACION_JUGADOR = pygame.USEREVENT + 5
