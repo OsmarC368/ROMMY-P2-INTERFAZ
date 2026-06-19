@@ -888,6 +888,12 @@ class ClienteMixin:
                 self.socket_cliente = None
 
                 # Notificación local a la interfaz (fuera de la capa de red)
+                if hasattr(self, '_manejo_mensaje_red'):
+                    self._manejo_mensaje_red({
+                        'type': 'JugadorDesconectado',
+                        'id_jugador': self.id_jugador,
+                        'TotalJugadores': len(self.clientes) if hasattr(self, 'clientes') else 0
+                    })
                 ##if hasattr(self, '_manejo_mensaje_red'):
                     ##self._manejo_mensaje_red({
                         ##'type': 'JugadorDesconectado',
@@ -920,4 +926,3 @@ class ClienteMixin:
         self.conectado = False
         self.desconectar_servidor()
         self.desconectar_cliente()
-
