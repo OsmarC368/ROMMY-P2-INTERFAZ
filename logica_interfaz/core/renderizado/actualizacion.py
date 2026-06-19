@@ -248,6 +248,7 @@ class ActualizacionMixin:
             except ValueError:
                 pass
             return
+            
         try:
             # 1. Obtener la posición ABSOLUTA actual de la carta existente
             posicion_absoluta_actual = None
