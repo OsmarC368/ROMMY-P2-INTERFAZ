@@ -414,15 +414,12 @@ def mostrar_mesa(un_juego,clase_mesa_interfaz,datos):
             # Reaplicar las puntuaciones previas a los nuevos objetos Jugador creados
             try:
                 for jugador in getattr(clase_mesa_interfaz, 'lista_jugadores_objetos', []):
-                    puntos_prev = puntuaciones_previas.get(str(jugador.nro_jugador)) 
+                    puntos_prev = puntuaciones_previas.get(jugador.nro_jugador) 
                     if puntos_prev is not None: 
                         try: 
                             setattr(jugador, 'puntos_acumulados', puntos_prev) 
-                            # ---> NUEVO: Inyectar los puntos a la credencial visual 
-                            if hasattr(jugador, 'usuario') and jugador.usuario: 
-                                jugador.usuario.puntos = puntos_prev 
                         except Exception: 
-                            pass
+                            pass 
                 # Actualizar la tabla/contador visual si existe
                 try:
                     if hasattr(clase_mesa_interfaz, 'referencia_elementos') and clase_mesa_interfaz.referencia_elementos.get('contador_puntos'):
@@ -910,36 +907,12 @@ def _manejar_evento_concluir_ronda(un_juego, evento):
                 pass
 
         # ── 4. Forzar reconstrucción visual ─────────────────────────────────── 
-        try: 
+        try:
             if hasattr(mesa_interfaz_obj, "manejar_partida") and un_juego.mesa: 
-                # 1. Guardar los puntos en una caja fuerte antes de limpiar la mesa 
-                puntuaciones_previas = {} 
-                for j in getattr(mesa_interfaz_obj, 'lista_jugadores_objetos', []): 
-                    puntuaciones_previas[str(j.nro_jugador)] = getattr(j, 'puntos_acumulados', 0) 
-                 
-                # 2. Limpiar y reconstruir la mesa (esto los reseteaba a cero) 
                 mesa_interfaz_obj.manejar_partida(un_juego.mesa) 
-                 
-                # 3. Devolver los puntos a los paneles públicos debajo de los nombres 
-                for j in getattr(mesa_interfaz_obj, 'lista_jugadores_objetos', []): 
-                    puntos_guardados = puntuaciones_previas.get(str(j.nro_jugador), 0) 
-                    setattr(j, 'puntos_acumulados', puntos_guardados) 
-                    if hasattr(j, 'usuario') and j.usuario: 
-                        j.usuario.puntos = puntos_guardados 
-                 
-                # 4. Asegurar que tu contador personal "Tus Puntos" tampoco se quede en 0 
-                contador = mesa_interfaz_obj.referencia_elementos.get("contador_puntos") 
-                if contador is not None: 
-                    puntos_local = puntuaciones_previas.get(str(id_local), 0) 
-                    contador.texto = f"Tus Puntos: {puntos_local}" 
-                    try: 
-                        contador.prepar_texto() 
-                    except: 
-                        pass 
-                 
-                print("[ConcluirRonda] manejar_partida() ejecutado y puntos restaurados sin glitch.") 
+                print("[ConcluirRonda] manejar_partida() ejecutado.") 
         except Exception as e: 
-            print(f"[ConcluirRonda] Error en manejar_partida: {e}")
+            print(f"[ConcluirRonda] Error en manejar_partida: {e}") 
 
         # ── 5. Mostrar cartel informativo ──────────────────────────────────────
         try:

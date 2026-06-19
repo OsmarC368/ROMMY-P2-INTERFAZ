@@ -278,9 +278,9 @@ class PuntosMixin:
                 setattr(jugador, 'puntos_ronda_actual', puntos_mano)
                 puntos_prev = getattr(jugador, 'puntos_acumulados', 0)
                 setattr(jugador, 'puntos_acumulados', puntos_prev + puntos_mano)
-                # ---> NUEVO: Inyectar los puntos a la credencial visual 
-                if hasattr(jugador, 'usuario') and jugador.usuario: 
-                    jugador.usuario.puntos = getattr(jugador, 'puntos_acumulados', 0) 
+                # # ---> NUEVO: Inyectar los puntos a la credencial visual 
+                # if hasattr(jugador, 'usuario') and jugador.usuario: 
+                #     jugador.usuario.puntos = getattr(jugador, 'puntos_acumulados', 0) 
  
                 # Si el jugador actualizado es el local, actualizar el contador visual
                 try:

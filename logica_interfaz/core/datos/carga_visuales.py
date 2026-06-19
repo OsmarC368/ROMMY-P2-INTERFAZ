@@ -57,8 +57,8 @@ class CargaVisualesMixin:
                 if str(j_data["id"]) == str(jugador.nro_jugador):
                     jugador.usuario.cartas = j_data["cantidad_mano"]
                     break
-            #jugador.usuario.puntos = getattr(jugador, 'puntos', 0)
-            jugador.usuario.puntos = getattr(jugador, 'puntos_acumulados', 0) 
+            jugador.usuario.puntos = getattr(jugador, 'puntos', 0)
+            #jugador.usuario.puntos = getattr(jugador, 'puntos_acumulados', 0) 
             # ───────────────────────────────────────────────────────────
             
             if jugador.nro_jugador != self.elementos_mesa["id_jugador"]:
