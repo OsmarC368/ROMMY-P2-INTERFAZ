@@ -1240,24 +1240,56 @@ class ProcesadorMensajesMixin:
                             
                         
                         # ACTUALIZAR MANO CHEAT
-                        elif mensaje.get("type") == "ActualizarManoCheat":
-                            nuevas_cartas_dict = mensaje.get("mano", [])
-                            try:
-                                nueva_mano = []
-                                for c in nuevas_cartas_dict:
-                                    nueva_mano.append(Carta(
-                                        un_juego=None,
-                                        numero=c.get("numero"),
-                                        figura=c.get("figura")
-                                    ))
-                                self.manos[id_jugador - 1] = nueva_mano
-                                for jug_info in self.mesa_juego.elementos_mesa.get("cantidad_manos_jugadores", []):
-                                    if jug_info["id"] == id_jugador:
-                                        jug_info["cantidad_mano"] = len(nueva_mano)
-                                        break
-                                print(f"[CheatSync] Mano del servidor para jugador {id_jugador} actualizada")
-                            except Exception as e:
-                                print(f"[CheatSync] Error actualizando mano cheat en servidor: {e}")
+                        #elif mensaje.get("type") == "ActualizarManoCheat":
+                         #   nuevas_cartas_dict = mensaje.get("mano", [])
+                          #  try:
+                           #     nueva_mano = []
+                            #    for c in nuevas_cartas_dict:
+                             #       nueva_mano.append(Carta(
+                              #          un_juego=None,
+                               #         numero=c.get("numero"),
+                                #        figura=c.get("figura")
+                                 #   ))
+                                #self.manos[id_jugador - 1] = nueva_mano
+                                #for jug_info in self.mesa_juego.elementos_mesa.get("cantidad_manos_jugadores", []):
+                                #    if jug_info["id"] == id_jugador:
+                                 #       jug_info["cantidad_mano"] = len(nueva_mano)
+                                  #      break
+                                #print(f"[CheatSync] Mano del servidor para jugador {id_jugador} actualizada")
+                            #except Exception as e:
+                             #   print(f"[CheatSync] Error actualizando mano cheat en servidor: {e}")
+
+                    # FIX Bug 2: Sincronizar mano del servidor con el cheat del cliente
+                    if mensaje.get("type") == "ActualizarManoCheat":
+                        nuevas_cartas_dict = mensaje.get("mano", [])
+                        try:
+                            nueva_mano = []
+                            for c in nuevas_cartas_dict:
+                                nueva_mano.append(Carta(
+                                    un_juego=None,
+                                    numero=c.get("numero"),
+                                    figura=c.get("figura")
+                                ))
+                            self.manos[id_jugador - 1] = nueva_mano
+
+                            # NUEVO: Actualizar contador de cartas en cantidad_manos_jugadores
+                            for jug_info in self.mesa_juego.elementos_mesa.get("cantidad_manos_jugadores", []):
+                                if jug_info["id"] == id_jugador:
+                                    jug_info["cantidad_mano"] = len(nueva_mano)
+                                    break
+
+                            # NUEVO: Notificar a todos los jugadores la cantidad actualizada
+                            self.difundir_excepcion(id_jugador, {
+                                "type": "se_bajo_alguien",  # Reutiliza mensaje existente para actualizar contadores
+                                "cantidad_manos_jugadores": self.mesa_juego.elementos_mesa.get("cantidad_manos_jugadores"),
+                                "jugadas_jugadores": self.jugadas_por_jugador,
+                            })
+
+                            print(f"[CheatSync] Mano servidor jugador {id_jugador}: "
+                                f"{[str(c) for c in nueva_mano]}")
+                        except Exception as e:
+                            print(f"[CheatSync] Error: {e}")
+                    # FIN NUEVO CÓDIGO
 
         except Exception as e:
             print(f"[Redes] Excepción crítica en hilo de cliente {id_jugador}: {e}")
