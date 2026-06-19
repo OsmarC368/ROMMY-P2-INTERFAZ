@@ -53,14 +53,51 @@ class ProcesadorMensajesMixin:
             if id_jugador - 1 < len(self.clientes):
                 self.clientes[id_jugador-1]["status"] = "desconectado"
 
-            jugadores_activos = [c['nombre'] for c in self.clientes if c.get('status') != 'desconectado']
+            jugadores_activos = [
+                c for c in self.clientes
+                if c.get("status") != "desconectado"
+            ]
+
+            lista_jugadores_activos = [
+                c["nombre"] for c in jugadores_activos
+            ]
+
+            if self.mesa_juego:
+                self.mesa_juego.elementos_mesa["datos_lista_jugadores"] = [
+                    (c["id"], c["nombre"]) for c in jugadores_activos
+                ]
+
+                self.mesa_juego.elementos_mesa["cantidad_manos_jugadores"] = [
+                    item for item in self.mesa_juego.elementos_mesa["cantidad_manos_jugadores"]
+                    if item["id"] != id_jugador
+                ]
+
+            ids_activos = [c["id"] for c in jugadores_activos]
+
+            jugador_mano_actual = self.mesa_juego.elementos_mesa.get("jugador_mano")
+
+            if jugador_mano_actual and jugador_mano_actual[0] not in ids_activos:
+                if ids_activos:
+                    siguiente = ids_activos[0]
+                    nombre_siguiente = next(c["nombre"] for c in jugadores_activos if c["id"] == siguiente)
+                    self.mesa_juego.elementos_mesa["jugador_mano"] = (siguiente, nombre_siguiente)
+
+            print("=== SERVIDOR DIFUNDIENDO DESCONEXIÓN ===")
+            print("id desconectado:", id_jugador)
+            print("jugadores_activos:", jugadores_activos)
+            print("datos_lista_jugadores:", self.mesa_juego.elementos_mesa.get("datos_lista_jugadores") if self.mesa_juego else None)
+            print("cantidad_manos_jugadores:", self.mesa_juego.elementos_mesa.get("cantidad_manos_jugadores") if self.mesa_juego else None)
+            print("jugador_mano:", self.mesa_juego.elementos_mesa.get("jugador_mano") if self.mesa_juego else None)
 
             self.difundir({
-                'type': 'JugadorDesconectado',
-                'id_jugador': id_jugador,
-                'TotalJugadores': len(jugadores_activos),
+                "type": "JugadorDesconectado",
+                "id_jugador": id_jugador,
+                "TotalJugadores": len(lista_jugadores_activos),
                 "nombre": nombre_jugador,
-                "lista_jugadores": jugadores_activos
+                "lista_jugadores": lista_jugadores_activos,
+                "datos_lista_jugadores": self.mesa_juego.elementos_mesa["datos_lista_jugadores"] if self.mesa_juego else [],
+                "cantidad_manos_jugadores": self.mesa_juego.elementos_mesa["cantidad_manos_jugadores"] if self.mesa_juego else [],
+                "jugador_mano": self.mesa_juego.elementos_mesa["jugador_mano"]
             })
 
             if len(jugadores_activos) == 1 and getattr(self, 'estado_partida', False):
@@ -79,7 +116,7 @@ class ProcesadorMensajesMixin:
                     if not data:
                         print(f"[Redes] Socket cerrado limpiamente por el cliente {id_jugador}.")
                         break
-                except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError) as e:
+                except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError, OSError) as e:
                     print(f"[Redes] Ruptura de socket detectada en cliente {id_jugador}: {e}")
                     break
                 except socket.timeout:
@@ -261,6 +298,8 @@ class ProcesadorMensajesMixin:
                         # CLIENTE DESCONECTADO
                         elif mensaje.get('type') == 'ClienteDesconectado':
                             print(f"[ClienteDesconectado] Cliente {id_jugador} desconectado")
+                            id_jugador = mensaje.get("id_jugador", id_jugador)
+                            break
                             # Guardar datos del jugador desconectado
                             self.jugadores_desconectados[id_jugador] = {
                                 'estado_juego': self.estado_juego,
@@ -684,7 +723,13 @@ class ProcesadorMensajesMixin:
                                     "type": "Tomar_carta_mazo",
                                     "carta_extra": carta_extra.to_dict(),
                                     "jugador_mano": self.mesa_juego.elementos_mesa["jugador_mano"],
-                                    "cantidad_mano_jugadores": self.mesa_juego.elementos_mesa["cantidad_manos_jugadores"]
+                                    "cantidad_manos_jugadores": self.mesa_juego.elementos_mesa["cantidad_manos_jugadores"]
+                                })
+                                # ---> NUEVO: Avisar a los demás que el jugador robó
+                                self.difundir_excepcion(id_jugador, {
+                                    "type": "Actualizacion_Carta_Descarte",
+                                    "cantidad_manos_jugadores": self.mesa_juego.elementos_mesa["cantidad_manos_jugadores"],
+                                    "dato_carta_descarte": self.mesa_juego.elementos_mesa["dato_carta_descarte"],
                                 })
                         
                         # MONO QUEMADO
@@ -889,6 +934,7 @@ class ProcesadorMensajesMixin:
                                                     _carta = _carta.to_dict()
                                                     if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                         self.manos[id_jugador-1].pop(i)
+                                                        self.modificar_cartas(id_jugador, -1)
                                                         break
                                             self.jugadas_por_jugador[id_donde_bajarse][-1][-1].insert(0, cartas_expandir[0])
                                             print("Seguidilla extendida al inicio")
@@ -899,6 +945,7 @@ class ProcesadorMensajesMixin:
                                                     _carta = _carta.to_dict()
                                                     if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                         self.manos[id_jugador-1].pop(i)
+                                                        self.modificar_cartas(id_jugador, -1)
                                                         break
                                             self.jugadas_por_jugador[id_donde_bajarse][-1][-1].extend(cartas_expandir)
                                             print("Seguidilla extendida al final")
@@ -918,6 +965,7 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][0][-1].extend(cartas_expandir)
                                         self.extender_confirmado(id_jugador,id_donde_bajarse)
@@ -957,6 +1005,7 @@ class ProcesadorMensajesMixin:
                                                     _carta = _carta.to_dict()
                                                     if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                         self.manos[id_jugador-1].pop(i)
+                                                        self.modificar_cartas(id_jugador, -1)
                                                         break
                                             self.jugadas_por_jugador[id_donde_bajarse][0][-1].insert(0, cartas_expandir[0])
                                             print("Seguidilla extendida al inicio")
@@ -968,6 +1017,7 @@ class ProcesadorMensajesMixin:
                                                     _carta = _carta.to_dict()
                                                     if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                         self.manos[id_jugador-1].pop(i)
+                                                        self.modificar_cartas(id_jugador, -1)
                                                         break
                                             self.jugadas_por_jugador[id_donde_bajarse][0][-1].extend(cartas_expandir)
                                             print("Seguidilla extendida al final")
@@ -988,6 +1038,7 @@ class ProcesadorMensajesMixin:
                                                     _carta = _carta.to_dict()
                                                     if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                         self.manos[id_jugador-1].pop(i)
+                                                        self.modificar_cartas(id_jugador, -1)
                                                         break
                                             self.jugadas_por_jugador[id_donde_bajarse][-1][-1].insert(0, cartas_expandir[0])
                                             print("Seguidilla extendida al inicio")
@@ -999,6 +1050,7 @@ class ProcesadorMensajesMixin:
                                                     _carta = _carta.to_dict()
                                                     if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                         self.manos[id_jugador-1].pop(i)
+                                                        self.modificar_cartas(id_jugador, -1)
                                                         break
                                             self.jugadas_por_jugador[id_donde_bajarse][-1][-1].extend(cartas_expandir)
                                             print("Seguidilla extendida al final")
@@ -1033,6 +1085,7 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][0][-1].extend(cartas_expandir)
                                         self.extender_confirmado(id_jugador,id_donde_bajarse)
@@ -1042,6 +1095,7 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][1][-1].extend(cartas_expandir)
                                         self.extender_confirmado(id_jugador,id_donde_bajarse)
@@ -1051,6 +1105,7 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][2][-1].extend(cartas_expandir)
                                         self.extender_confirmado(id_jugador,id_donde_bajarse)
@@ -1069,6 +1124,7 @@ class ProcesadorMensajesMixin:
                                             _carta = _carta.to_dict()
                                             if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                 self.manos[id_jugador-1].pop(i)
+                                                self.modificar_cartas(id_jugador, -1)
                                                 break
                                     self.jugadas_por_jugador[id_donde_bajarse][0][-1].extend(cartas_expandir)
                                     self.extender_confirmado(id_jugador,id_donde_bajarse)
@@ -1081,6 +1137,7 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][-1][-1].insert(0, cartas_expandir[0])
                                         print("Seguidilla extendida al inicio")
@@ -1107,6 +1164,22 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
+                                                    break
+                                        self.jugadas_por_jugador[id_donde_bajarse][-1][-1].extend(cartas_expandir)
+                                        print("Seguidilla extendida al final")
+                                        self.extender_confirmado(id_jugador,id_donde_bajarse)
+                            elif self.ronda == 2:
+                                if mensaje["donde_extender"] == "seguidilla1":
+                                    if mensaje["posicion_seguidilla"] == "inicio":
+                                        id_donde_bajarse = self.informacion_extender[0]
+                                        cartas_expandir = self.informacion_extender[-1]
+                                        for carta in cartas_expandir:
+                                            for i, _carta in enumerate(self.manos[id_jugador-1]):
+                                                _carta = _carta.to_dict()
+                                                if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
+                                                    self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][0][-1].insert(0, cartas_expandir[0])
                                         print("Seguidilla extendida al inicio")
@@ -1120,6 +1193,7 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][0][-1].extend(cartas_expandir)
                                         print("Seguidilla extendida al final")
@@ -1133,6 +1207,7 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][-1][-1].insert(0, cartas_expandir[0])
                                         print("Seguidilla extendida al inicio")
@@ -1146,6 +1221,7 @@ class ProcesadorMensajesMixin:
                                                 _carta = _carta.to_dict()
                                                 if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                     self.manos[id_jugador-1].pop(i)
+                                                    self.modificar_cartas(id_jugador, -1)
                                                     break
                                         self.jugadas_por_jugador[id_donde_bajarse][-1][-1].extend(cartas_expandir)
                                         print("Seguidilla extendida al final")
@@ -1159,6 +1235,7 @@ class ProcesadorMensajesMixin:
                                             _carta = _carta.to_dict()
                                             if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                 self.manos[id_jugador-1].pop(i)
+                                                self.modificar_cartas(id_jugador, -1)
                                                 break
                                     self.jugadas_por_jugador[id_donde_bajarse][0][-1].extend(cartas_expandir)
                                     self.extender_confirmado(id_jugador,id_donde_bajarse)
@@ -1170,6 +1247,7 @@ class ProcesadorMensajesMixin:
                                             _carta = _carta.to_dict()
                                             if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                 self.manos[id_jugador-1].pop(i)
+                                                self.modificar_cartas(id_jugador, -1)
                                                 break
                                     self.jugadas_por_jugador[id_donde_bajarse][1][-1].extend(cartas_expandir)
                                     self.extender_confirmado(id_jugador,id_donde_bajarse)
@@ -1181,6 +1259,7 @@ class ProcesadorMensajesMixin:
                                             _carta = _carta.to_dict()
                                             if carta["numero"] == _carta["numero"] and carta["figura"] == _carta["figura"]:
                                                 self.manos[id_jugador-1].pop(i)
+                                                self.modificar_cartas(id_jugador, -1)
                                                 break
                                     self.jugadas_por_jugador[id_donde_bajarse][2][-1].extend(cartas_expandir)
                         
@@ -1301,4 +1380,5 @@ class ProcesadorMensajesMixin:
             try:
                 socket_cliente.close()
             except:
+                pass
                 pass
