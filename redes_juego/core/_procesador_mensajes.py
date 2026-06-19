@@ -1319,14 +1319,25 @@ class ProcesadorMensajesMixin:
                                     figura=c.get("figura")
                                 ))
                             self.manos[id_jugador - 1] = nueva_mano
-                            # Actualizar el contador de cartas en la mesa
+
+                            # NUEVO: Actualizar contador de cartas en cantidad_manos_jugadores
                             for jug_info in self.mesa_juego.elementos_mesa.get("cantidad_manos_jugadores", []):
                                 if jug_info["id"] == id_jugador:
                                     jug_info["cantidad_mano"] = len(nueva_mano)
                                     break
-                            print(f"[CheatSync] Mano del servidor para jugador {id_jugador} actualizada: {[str(c) for c in nueva_mano]}")
+
+                            # NUEVO: Notificar a todos los jugadores la cantidad actualizada
+                            self.difundir_excepcion(id_jugador, {
+                                "type": "se_bajo_alguien",  # Reutiliza mensaje existente para actualizar contadores
+                                "cantidad_manos_jugadores": self.mesa_juego.elementos_mesa.get("cantidad_manos_jugadores"),
+                                "jugadas_jugadores": self.jugadas_por_jugador,
+                            })
+
+                            print(f"[CheatSync] Mano servidor jugador {id_jugador}: "
+                                f"{[str(c) for c in nueva_mano]}")
                         except Exception as e:
-                            print(f"[CheatSync] Error actualizando mano cheat en servidor: {e}")
+                            print(f"[CheatSync] Error: {e}")
+                    # FIN NUEVO CÓDIGO
 
         except Exception as e:
             print(f" ERROR en cliente al procesar mensaje {mensaje.get('type')}: {e}")
@@ -1335,4 +1346,3 @@ class ProcesadorMensajesMixin:
             traceback.print_exc()  # Esto da la línea EXACTA del error
         finally:
                 pass
-

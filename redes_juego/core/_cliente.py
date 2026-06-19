@@ -777,4 +777,3 @@ class ClienteMixin:
         self.conectado = False
         self.desconectar_servidor()
         self.desconectar_cliente()
-

@@ -511,4 +511,3 @@ class LogicaPartidaMixin:
             })
         except Exception:
             pass
-
