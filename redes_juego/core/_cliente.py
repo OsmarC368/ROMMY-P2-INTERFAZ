@@ -894,6 +894,12 @@ class ClienteMixin:
                         ##'id_jugador': self.id_jugador,
                         ##'TotalJugadores': len(self.clientes) if hasattr(self, 'clientes') else 0
                     ##})
+                if hasattr(self, '_manejo_mensaje_red'):
+                    self._manejo_mensaje_red({
+                        'type': 'JugadorDesconectado',
+                        'id_jugador': self.id_jugador,
+                        'TotalJugadores': len(self.clientes) if hasattr(self, 'clientes') else 0
+                    })
         else:
             print("[Redes] Socket cliente no existe o ID de jugador no asignado")
 
