@@ -121,3 +121,4 @@ class PosicionamientoMixin:
             elif jugador.direccion == "izquierda":
                 x, y = jugador.x + (jugador.ancho - 50), jugador.y - (jugador.alto - 62)
         return x, y
+

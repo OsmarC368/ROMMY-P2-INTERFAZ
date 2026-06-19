@@ -922,4 +922,3 @@ class ClienteMixin:
         self.desconectar_cliente()
 
 
-
