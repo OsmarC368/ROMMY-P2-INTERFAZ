@@ -1270,4 +1270,3 @@ class ProcesadorMensajesMixin:
                 socket_cliente.close()
             except:
                 pass
-
