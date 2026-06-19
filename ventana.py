@@ -617,23 +617,23 @@ class Ventana(
             self.ejecutar_dibujado()
             
             # ======Jesua:Mostrar tabla de puntuación mientras se mantiene presionada la tecla TAB
-            try:
-                keys = pygame.key.get_pressed()
-                if hasattr(self, 'mesa_juego') and self.mesa_juego:
-                    if keys[pygame.K_TAB]:
-                        # Mostrar menú de puntuación
-                        self.mesa_juego.mostrar_menu_puntuacion()
-                    else:
-                        # Ocultar menú de puntuación cuando no se presiona TAB
-                        self.mesa_juego.ocultar_menu_puntuacion()
-                    
-                    # Dibujar menú de puntuación si está visible
-                    if (hasattr(self.mesa_juego, 'menu_puntuacion') and 
-                        self.mesa_juego.menu_puntuacion and 
-                        self.mesa_juego.menu_puntuacion.visible):
-                        self.mesa_juego.menu_puntuacion.dibujar_menu()
-            except Exception as e:
-                # no bloquear el bucle de juego por errores en el overlay
+            try: 
+                keys = pygame.key.get_pressed() 
+                if hasattr(self, 'mesa_juego') and self.mesa_juego: 
+                    if keys[pygame.K_TAB]: 
+                        # Mostrar menú de puntuación 
+                        self.mesa_juego.mostrar_menu_puntuacion() 
+                    else: 
+                        # Ocultar menú de puntuación cuando no se presiona TAB 
+                        self.mesa_juego.ocultar_menu_puntuacion() 
+                     
+                    # Dibujar menú de puntuación si está visible 
+                    if (hasattr(self.mesa_juego, 'menu_puntuacion') and  
+                        self.mesa_juego.menu_puntuacion and  
+                        self.mesa_juego.menu_puntuacion.visible): 
+                        self.mesa_juego.menu_puntuacion.dibujar_menu() 
+            except Exception as e: 
+                # no bloquear el bucle de juego por errores en el overlay 
                 print(f"Error al mostrar tabla de puntuación: {e}")
 
             pygame.display.flip()
