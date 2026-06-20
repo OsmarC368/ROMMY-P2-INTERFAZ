@@ -43,7 +43,7 @@ class LogicaPartidaMixin:
             indice_del_jugador_mano, nom_jug_mano = choice(list(enumerate(lista_jugadores)))
             print("indice")
             print(indice_del_jugador_mano)
-            if self.clientes[indice_del_jugador_mano-1]["status"] == "activo":
+            if self.clientes[indice_del_jugador_mano]["status"] == "activo":
                 print("jugador mano elegiod")
                 act = False
                 print(f"El jugador mano es: {nom_jug_mano}")
