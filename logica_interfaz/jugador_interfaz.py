@@ -30,7 +30,21 @@ class Jugador_interfaz(Jugador):
         if len(nombre_corto) > 12:
             nombre_corto = nombre_corto[:10] + "..."
             
-        usuario = PanelJugadorVisual(self.un_juego, nombre_corto, self.x, self.y, self.nro_jugador)
+        offset_x = 0
+        offset_y = 0
+        
+        if hasattr(self, 'direccion'):
+            if self.direccion == "arriba":
+                offset_y = -40
+                offset_x = 70
+            elif self.direccion == "izquierda":
+                offset_x = 20
+                offset_y = -170
+            elif self.direccion == "derecha":
+                offset_x = 40
+                offset_y = -170
+
+        usuario = PanelJugadorVisual(self.un_juego, nombre_corto, self.x + offset_x, self.y + offset_y, self.nro_jugador)
         
         if es_turno:
             usuario.color_borde_actual = constantes.NARANJA

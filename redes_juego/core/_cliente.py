@@ -355,12 +355,11 @@ class ClienteMixin:
             self.mesa_juego.elementos_mesa["jugador_mano"] = mensaje.get("jugador_mano")
             self.mesa_juego.elementos_mesa["cantidad_manos_jugadores"] = mensaje.get("cantidad_manos_jugadores")
             self.mesa_juego.elementos_mesa["turno_robar"] = mensaje.get("turno_robar")
-            self.mesa_juego.determinar_turno()
-            self.mesa_juego.actualizar_indicador_turno()
-            self.mesa_juego.actualizar_elementos_jugadores()
             # Si no es el turno del jugador y no descartó recientemente, crear botones
             if self.mesa_juego:
                 self.mesa_juego.determinar_turno()
+                self.mesa_juego.actualizar_indicador_turno()
+                self.mesa_juego.actualizar_elementos_jugadores()
                 if not self.mesa_juego.tu_turno and not self.descarto_recientemente:
                     # Asegurarse de que los botones estén limpios antes de crear nuevos
                     self.mesa_juego.limpiar_botones(self.mesa_juego.mesa)
