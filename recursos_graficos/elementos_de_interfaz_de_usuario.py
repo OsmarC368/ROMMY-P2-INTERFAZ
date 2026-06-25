@@ -663,7 +663,6 @@ class EntradaTexto(BotonRadio):
             pygame.draw.line(self.pantalla, self.color_texto, (x_cursor, y_inicio), (x_cursor, y_fin), 1)
     def verificar_hover(self, posicion_raton):
         return super().verificar_hover(posicion_raton)
-
 class CartelAlerta:
     def __init__(self, pantalla, mensaje, x, y, ancho=500, alto=300, mostrar_boton_cerrar=True, duracion_ms=None): #====Jesua: añadido mostrar_boton_cerrar para la alerta de ronda finalizada, duracion_ms para temporizacion
             self.pantalla = pantalla
@@ -967,6 +966,8 @@ class BotonRadioImagenes(BotonRadio):
         self._posicion_raton_inicio_arrastre_x = None
         self._movio_durante_arrastre = False
         self._umbral_pixeles_arrastre = 6
+        self._umbral_doble_click_milisegundos = 400
+        self._ultimo_click_time = 0
         self.presionada = False
         self.arrastrada = False
         self.click_finalizado = False
@@ -1303,8 +1304,16 @@ class BotonRadioImagenes(BotonRadio):
         
         # Aplicar lógica según tipo de interacción
         if fue_click_simple:
-            self.seleccionar()
+            ahora = pygame.time.get_ticks()
+            if self._es_doble_click(ahora):
+                self.seleccionar()
+                self._ejecutar_descartar_doble_click()
+                self._ultimo_click_time = 0
+            else:
+                self._ultimo_click_time = ahora
+                self.seleccionar()
         else:
+            self._ultimo_click_time = 0
             self.seleccionado = True
             self.color_borde_actual = self.color_borde_clicado
             self.y = self.y_base
@@ -1320,6 +1329,25 @@ class BotonRadioImagenes(BotonRadio):
         
         self._limpiar_estado_arrastre()
         return True
+
+    def _es_doble_click(self, ahora):
+        """Determina si el click actual es un doble clic válido."""
+        return (ahora - getattr(self, '_ultimo_click_time', 0)) <= self._umbral_doble_click_milisegundos
+
+    def _ejecutar_descartar_doble_click(self):
+        """Descarta la carta por doble clic si la mesa expone la acción."""
+        if self.deshabilitado:
+            return
+        if not hasattr(self.mesa, 'accion_descartar'):
+            return
+        if hasattr(self.mesa, 'tu_turno') and not getattr(self.mesa, 'tu_turno'):
+            return
+
+        print("🔁 Doble clic detectado: descartando carta")
+        try:
+            self.mesa.accion_descartar()
+        except Exception as e:
+            print(f"Error ejecutando descartar por doble clic: {e}")
 
     def manejar_evento(self, evento):
         if not self.visible or self.deshabilitado:
